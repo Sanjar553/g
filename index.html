@@ -32,12 +32,12 @@
     <style>
         body { font-family: 'Inter', sans-serif; }
         .glassmorphism {
-            background: rgba(255, 255, 255, 0.7);
+            background: rgba(255, 255, 255, 0.75);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
         }
         .dark .glassmorphism {
-            background: rgba(15, 23, 42, 0.75);
+            background: rgba(15, 23, 42, 0.8);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
         }
@@ -56,6 +56,12 @@
         .dark ::-webkit-scrollbar-thumb {
             background: #475569;
         }
+        /* Drag-and-Drop Active Overlay */
+        .drag-over {
+            border-style: dashed !important;
+            border-color: #0ea5e9 !important;
+            background-color: rgba(14, 165, 233, 0.08) !important;
+        }
     </style>
 </head>
 <body class="bg-slate-100 text-slate-800 dark:bg-slate-900 dark:text-slate-100 min-h-screen transition-colors duration-200 flex flex-col">
@@ -67,15 +73,15 @@
     <div id="app" class="flex-1 flex flex-col min-h-screen">
         
         <!-- HEADER / NAVBAR -->
-        <header class="glassmorphism sticky top-0 z-40 border-b border-slate-200 dark:border-slate-800 px-4 lg:px-8 py-3 flex items-center justify-between">
+        <header class="glassmorphism sticky top-0 z-40 border-b border-slate-200 dark:border-slate-800 px-4 lg:px-8 py-3 flex items-center justify-between shadow-sm">
             <div class="flex items-center space-x-3">
-                <div class="bg-brand-600 text-white p-2.5 rounded-xl shadow-lg flex items-center justify-center">
-                    <i class="fa-solid me-0 fa-hard-drive text-xl"></i>
+                <div class="bg-gradient-to-tr from-brand-600 to-indigo-600 text-white p-2.5 rounded-xl shadow-md flex items-center justify-center">
+                    <i class="fa-solid fa-hard-drive text-xl"></i>
                 </div>
                 <div>
                     <h1 class="font-bold text-xl tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
                         SaveAsFile
-                        <span class="text-xs bg-brand-500/10 text-brand-600 dark:text-brand-400 font-semibold px-2 py-0.5 rounded-full border border-brand-500/20">v2.0</span>
+                        <span class="text-[10px] bg-brand-500/10 text-brand-600 dark:text-brand-400 font-semibold px-2 py-0.5 rounded-full border border-brand-500/20">v2.1 Pro</span>
                     </h1>
                     <p class="text-xs text-slate-500 dark:text-slate-400 hidden sm:block">Xavfsiz fayllar va ochiq kodlar ombori</p>
                 </div>
@@ -106,7 +112,7 @@
 
             <!-- AUTHENTICATION VIEW (Sign In / Sign Up) -->
             <section id="authSection" class="w-full max-w-md mx-auto my-auto py-10">
-                <div class="glassmorphism bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/60 rounded-3xl p-6 sm:p-8 shadow-2xl">
+                <div class="glassmorphism bg-white/90 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700/60 rounded-3xl p-6 sm:p-8 shadow-2xl">
                     
                     <!-- Auth Switch Tabs -->
                     <div class="flex bg-slate-200/60 dark:bg-slate-900/60 p-1 rounded-2xl mb-6">
@@ -171,11 +177,20 @@
                         </button>
                     </div>
 
+                    <!-- Search Input Box -->
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-slate-200 dark:border-slate-700/60 shadow-sm space-y-2">
+                        <label class="font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider text-[10px] block">Tezkor Qidiruv</label>
+                        <div class="relative">
+                            <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-slate-400 text-xs"></i>
+                            <input type="text" id="searchInput" oninput="handleSearch()" class="w-full pl-8 pr-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500" placeholder="Qidirish...">
+                        </div>
+                    </div>
+
                     <!-- Profile Info Box -->
                     <div class="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-slate-200 dark:border-slate-700/60 shadow-sm text-xs space-y-2">
                         <div class="font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider text-[10px]">Profil ma'lumoti</div>
                         <div class="flex items-center gap-3 pt-1">
-                            <div class="w-10 h-10 rounded-full bg-brand-500 text-white font-bold flex items-center justify-center text-base" id="userAvatar">
+                            <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-brand-500 to-indigo-500 text-white font-bold flex items-center justify-center text-base shadow-sm" id="userAvatar">
                                 U
                             </div>
                             <div class="overflow-hidden">
@@ -212,6 +227,12 @@
                                     <input type="file" id="fileInput" onchange="handleFileUpload(event)" class="hidden">
                                 </label>
                             </div>
+                        </div>
+
+                        <!-- Drag and Drop Dropzone Indicator -->
+                        <div id="dropZone" class="border-2 border-dashed border-slate-300 dark:border-slate-700 p-6 rounded-2xl text-center transition-all bg-white/50 dark:bg-slate-800/50">
+                            <i class="fa-solid fa-cloud-arrow-up text-3xl text-brand-500 mb-2"></i>
+                            <p class="text-xs text-slate-600 dark:text-slate-400 font-medium">Fayllarni shu yerga sudrab tashlang yoki yuqoridagi tugmani bosing</p>
                         </div>
 
                         <!-- Folders Section -->
@@ -320,6 +341,9 @@
                     <h3 id="viewCodeTitle" class="text-base font-bold text-white truncate">Kod nomi</h3>
                 </div>
                 <div class="flex items-center gap-2">
+                    <button id="runCodeBtn" onclick="runWebCodePreview()" class="hidden px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs rounded-xl transition-all flex items-center gap-1.5">
+                        <i class="fa-solid fa-play"></i> Bajarib ko'rish
+                    </button>
                     <button id="copyCodeBtn" onclick="copyCodeFromView()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs rounded-xl transition-all flex items-center gap-1.5">
                         <i class="fa-regular fa-copy"></i> Nusxalash
                     </button>
@@ -331,6 +355,7 @@
             <div class="flex-1 overflow-auto bg-slate-950 p-4 rounded-xl border border-slate-800 font-mono text-xs text-emerald-400">
                 <pre id="viewCodeContent" class="whitespace-pre-wrap break-all"></pre>
             </div>
+            <iframe id="codePreviewFrame" class="hidden w-full h-48 bg-white rounded-xl border border-slate-700"></iframe>
         </div>
     </div>
 
@@ -350,21 +375,17 @@
 
                 request.onupgradeneeded = (e) => {
                     db = e.target.result;
-                    // Users Store
                     if (!db.objectStoreNames.contains('users')) {
                         db.createObjectStore('users', { keyPath: 'id' });
                     }
-                    // Folders Store
                     if (!db.objectStoreNames.contains('folders')) {
                         const folderStore = db.createObjectStore('folders', { keyPath: 'id' });
                         folderStore.createIndex('userId', 'userId', { unique: false });
                     }
-                    // Files Store
                     if (!db.objectStoreNames.contains('files')) {
                         const fileStore = db.createObjectStore('files', { keyPath: 'id' });
                         fileStore.createIndex('userId', 'userId', { unique: false });
                     }
-                    // Code Snippets Store
                     if (!db.objectStoreNames.contains('codes')) {
                         const codeStore = db.createObjectStore('codes', { keyPath: 'id' });
                         codeStore.createIndex('userId', 'userId', { unique: false });
@@ -383,7 +404,6 @@
             });
         }
 
-        // Generic IndexedDB Helper Functions
         function dbAdd(storeName, item) {
             return new Promise((resolve, reject) => {
                 const tx = db.transaction(storeName, 'readwrite');
@@ -429,10 +449,10 @@
            2. GLOBAL STATE & THEME MANAGEMENT
            ========================================================================== */
         let currentUser = null;
-        let currentFolderId = null; // null means root folder
-        let activeMainTab = 'files'; // 'files' or 'codes'
+        let currentFolderId = null;
+        let activeMainTab = 'files';
+        let searchQuery = '';
 
-        // Theme Toggle Handler
         function toggleTheme() {
             const html = document.documentElement;
             const themeIcon = document.getElementById('themeIcon');
@@ -459,7 +479,6 @@
             }
         }
 
-        // Toast Notification Function
         function showToast(message, type = 'info') {
             const container = document.getElementById('toast-container');
             const toast = document.createElement('div');
@@ -515,7 +534,6 @@
             }
 
             try {
-                // Check if username already exists
                 const tx = db.transaction('users', 'readonly');
                 const store = tx.objectStore('users');
                 const req = store.getAll();
@@ -528,13 +546,12 @@
                         return;
                     }
 
-                    // Create new User ID
                     const userId = 'USR-' + Math.floor(100000 + Math.random() * 900000);
                     const newUser = {
                         id: userId,
                         fullName,
                         username,
-                        password, // Simple local auth (hashed/plain for local browser context)
+                        password,
                         createdAt: new Date().toISOString()
                     };
 
@@ -577,7 +594,6 @@
             currentUser = user;
             localStorage.setItem('activeUserId', user.id);
             
-            // Update UI
             document.getElementById('authSection').classList.add('hidden');
             document.getElementById('dashboardSection').classList.remove('hidden');
             document.getElementById('userHeaderProfile').classList.remove('hidden');
@@ -588,8 +604,8 @@
             document.getElementById('profileUserId').textContent = 'ID: ' + user.id;
             document.getElementById('userAvatar').textContent = user.fullName.charAt(0).toUpperCase();
 
-            // Load User Dashboard Data
             currentFolderId = null;
+            setupDragAndDrop();
             renderDashboard();
         }
 
@@ -617,7 +633,7 @@
         }
 
         /* ==========================================================================
-           4. NAVIGATION & TAB SWITCHING
+           4. NAVIGATION, SEARCH & TAB SWITCHING
            ========================================================================== */
         function switchMainTab(tab) {
             activeMainTab = tab;
@@ -641,6 +657,11 @@
                 navFilesBtn.className = "w-full text-left px-4 py-3 rounded-xl font-medium text-sm flex items-center gap-3 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-all";
                 renderCodeSnippets();
             }
+        }
+
+        function handleSearch() {
+            searchQuery = document.getElementById('searchInput').value.trim().toLowerCase();
+            renderDashboard();
         }
 
         function renderDashboard() {
@@ -690,14 +711,12 @@
             if (!confirm("Ushbu papkani o'chirmoqchimisiz? Ichidagi fayllar ham o'chib ketadi.")) return;
 
             try {
-                // Delete child files
                 const userFiles = await dbGetAllByIndex('files', 'userId', currentUser.id);
                 const folderFiles = userFiles.filter(f => f.folderId === folderId);
                 for (const file of folderFiles) {
                     await dbDelete('files', file.id);
                 }
 
-                // Delete folder
                 await dbDelete('folders', folderId);
                 showToast("Papka o'chirildi", 'info');
                 renderFilesAndFolders();
@@ -707,14 +726,47 @@
         }
 
         /* ==========================================================================
-           6. FILE UPLOAD & MANAGEMENT MODULE
+           6. FILE UPLOAD, DRAG & DROP & MANAGEMENT MODULE
            ========================================================================== */
+        function setupDragAndDrop() {
+            const dropZone = document.getElementById('dropZone');
+            if (!dropZone) return;
+
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, preventDefaults, false);
+            });
+
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropZone.addEventListener(eventName, () => dropZone.classList.add('drag-over'), false);
+            });
+
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, () => dropZone.classList.remove('drag-over'), false);
+            });
+
+            dropZone.addEventListener('drop', (e) => {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+                if (files.length > 0) {
+                    processUploadedFile(files[0]);
+                }
+            });
+        }
+
         async function handleFileUpload(e) {
             const file = e.target.files[0];
             if (!file) return;
+            processUploadedFile(file);
+            e.target.value = '';
+        }
 
+        function processUploadedFile(file) {
             showToast("Fayl yuklanmoqda...", 'info');
-
             const reader = new FileReader();
             reader.onload = async function(event) {
                 const newFile = {
@@ -724,16 +776,14 @@
                     name: file.name,
                     size: file.size,
                     type: file.type,
-                    data: event.target.result, // Base64 / ArrayBuffer string
+                    data: event.target.result,
                     createdAt: new Date().toISOString()
                 };
 
                 await dbAdd('files', newFile);
                 showToast("Fayl muvaffaqiyatli yuklandi!", 'success');
-                e.target.value = ''; // Reset input
                 renderFilesAndFolders();
             };
-
             reader.readAsDataURL(file);
         }
 
@@ -826,14 +876,44 @@
                 document.getElementById('viewCodeLang').textContent = code.lang;
                 document.getElementById('viewCodeContent').textContent = code.content;
 
+                const runBtn = document.getElementById('runCodeBtn');
+                const iframe = document.getElementById('codePreviewFrame');
+                iframe.classList.add('hidden');
+
+                if (['html', 'javascript', 'css'].includes(code.lang.toLowerCase())) {
+                    runBtn.classList.remove('hidden');
+                } else {
+                    runBtn.classList.add('hidden');
+                }
+
                 document.getElementById('codeViewModal').classList.remove('hidden');
             };
+        }
+
+        function runWebCodePreview() {
+            const codeText = document.getElementById('viewCodeContent').textContent;
+            const lang = document.getElementById('viewCodeLang').textContent.toLowerCase();
+            const iframe = document.getElementById('codePreviewFrame');
+
+            iframe.classList.remove('hidden');
+            const doc = iframe.contentWindow.document;
+            doc.open();
+
+            if (lang === 'html') {
+                doc.write(codeText);
+            } else if (lang === 'javascript') {
+                doc.write(`<!DOCTYPE html><html><body><script>${codeText}<\/script></body></html>`);
+            } else if (lang === 'css') {
+                doc.write(`<!DOCTYPE html><html><head><style>${codeText}</style></head><body><h1>CSS Prevyu</h1><p>Ushbu namuna matn.</p></body></html>`);
+            }
+
+            doc.close();
+            showToast("Kod bajarildi!", 'success');
         }
 
         function copyCodeFromView() {
             const codeText = document.getElementById('viewCodeContent').textContent;
             
-            // Clipboard Copy Command
             const tempTextArea = document.createElement('textarea');
             tempTextArea.value = codeText;
             document.body.appendChild(tempTextArea);
@@ -852,33 +932,34 @@
         }
 
         /* ==========================================================================
-           8. RENDERERS & DISPLAY LOGIC
+           8. RENDERERS & DISPLAY LOGIC WITH FILTERING
            ========================================================================== */
         async function renderFilesAndFolders() {
             if (!currentUser) return;
 
-            // Fetch User Folders and Files
             const allFolders = await dbGetAllByIndex('folders', 'userId', currentUser.id);
             const allFiles = await dbGetAllByIndex('files', 'userId', currentUser.id);
 
-            // Filter by Current Folder Level
-            const currentFolders = allFolders.filter(f => f.parentId === currentFolderId);
-            const currentFiles = allFiles.filter(f => f.folderId === currentFolderId);
+            let currentFolders = allFolders.filter(f => f.parentId === currentFolderId);
+            let currentFiles = allFiles.filter(f => f.folderId === currentFolderId);
 
-            // Update Breadcrumb Path
+            if (searchQuery) {
+                currentFolders = allFolders.filter(f => f.name.toLowerCase().includes(searchQuery));
+                currentFiles = allFiles.filter(f => f.name.toLowerCase().includes(searchQuery));
+            }
+
             const breadcrumbEl = document.getElementById('currentFolderPath');
-            if (currentFolderId) {
+            if (currentFolderId && !searchQuery) {
                 const currentFolder = allFolders.find(f => f.id === currentFolderId);
                 breadcrumbEl.innerHTML = `<span class="text-slate-400">/</span> <span class="text-brand-600 dark:text-brand-400 font-bold">${currentFolder ? currentFolder.name : 'Papka'}</span>`;
             } else {
-                breadcrumbEl.innerHTML = '';
+                breadcrumbEl.innerHTML = searchQuery ? `<span class="text-xs text-brand-500 font-semibold">(Qidiruv natijalari)</span>` : '';
             }
 
-            // Render Folders
             const foldersGrid = document.getElementById('foldersGrid');
             foldersGrid.innerHTML = '';
             if (currentFolders.length === 0) {
-                foldersGrid.innerHTML = `<p class="text-xs text-slate-400 col-span-full italic">Papkalar mavjud emas</p>`;
+                foldersGrid.innerHTML = `<p class="text-xs text-slate-400 col-span-full italic">Papkalar topilmadi</p>`;
             } else {
                 currentFolders.forEach(folder => {
                     const folderCard = document.createElement('div');
@@ -897,15 +978,14 @@
                 });
             }
 
-            // Render Files
             const filesGrid = document.getElementById('filesGrid');
             filesGrid.innerHTML = '';
             if (currentFiles.length === 0) {
-                filesGrid.innerHTML = `<p class="text-xs text-slate-400 col-span-full italic">Fayllar yuklanmagan</p>`;
+                filesGrid.innerHTML = `<p class="text-xs text-slate-400 col-span-full italic">Fayllar topilmadi</p>`;
             } else {
                 currentFiles.forEach(file => {
                     const fileCard = document.createElement('div');
-                    fileCard.className = "bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700/60 shadow-sm flex flex-col justify-between gap-3";
+                    fileCard.className = "bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700/60 shadow-sm flex flex-col justify-between gap-3 hover:border-brand-500/50 transition-all";
                     
                     const formattedSize = (file.size / 1024).toFixed(1) + ' KB';
                     const iconClass = getFileIcon(file.type, file.name);
@@ -939,18 +1019,23 @@
         async function renderCodeSnippets() {
             if (!currentUser) return;
 
-            const allCodes = await dbGetAllByIndex('codes', 'userId', currentUser.id);
+            let allCodes = await dbGetAllByIndex('codes', 'userId', currentUser.id);
+
+            if (searchQuery) {
+                allCodes = allCodes.filter(c => c.title.toLowerCase().includes(searchQuery) || c.lang.toLowerCase().includes(searchQuery));
+            }
+
             const codesGrid = document.getElementById('codesGrid');
             codesGrid.innerHTML = '';
 
             if (allCodes.length === 0) {
-                codesGrid.innerHTML = `<p class="text-xs text-slate-400 col-span-full italic">Open-source kodlar mavjud emas. Yangi kod qo'shing!</p>`;
+                codesGrid.innerHTML = `<p class="text-xs text-slate-400 col-span-full italic">Open-source kodlar topilmadi.</p>`;
                 return;
             }
 
             allCodes.forEach(code => {
                 const codeCard = document.createElement('div');
-                codeCard.className = "bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700/60 shadow-sm space-y-3 flex flex-col justify-between";
+                codeCard.className = "bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700/60 shadow-sm space-y-3 flex flex-col justify-between hover:border-emerald-500/50 transition-all";
                 
                 codeCard.innerHTML = `
                     <div>
