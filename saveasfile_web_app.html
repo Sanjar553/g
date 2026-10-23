@@ -1,0 +1,1022 @@
+<!DOCTYPE html>
+<html lang="uz" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SaveAsFile - Fayllar va Kodlar Ombori</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                            900: '#0c4a6e',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .glassmorphism {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+        .dark .glassmorphism {
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #94a3b8;
+            border-radius: 4px;
+        }
+        .dark ::-webkit-scrollbar-thumb {
+            background: #475569;
+        }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 dark:bg-slate-900 dark:text-slate-100 min-h-screen transition-colors duration-200 flex flex-col">
+
+    <!-- Toast Notification Box -->
+    <div id="toast-container" class="fixed top-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- MAIN APP CONTAINER -->
+    <div id="app" class="flex-1 flex flex-col min-h-screen">
+        
+        <!-- HEADER / NAVBAR -->
+        <header class="glassmorphism sticky top-0 z-40 border-b border-slate-200 dark:border-slate-800 px-4 lg:px-8 py-3 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="bg-brand-600 text-white p-2.5 rounded-xl shadow-lg flex items-center justify-center">
+                    <i class="fa-solid me-0 fa-hard-drive text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-xl tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+                        SaveAsFile
+                        <span class="text-xs bg-brand-500/10 text-brand-600 dark:text-brand-400 font-semibold px-2 py-0.5 rounded-full border border-brand-500/20">v2.0</span>
+                    </h1>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 hidden sm:block">Xavfsiz fayllar va ochiq kodlar ombori</p>
+                </div>
+            </div>
+
+            <!-- Top Right Bar Controls -->
+            <div class="flex items-center space-x-3">
+                <!-- Dark / Light Mode Toggle Button -->
+                <button id="themeToggleBtn" onclick="toggleTheme()" class="p-2.5 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-xl transition-all" title="Mavzuni o'zgartirish">
+                    <i id="themeIcon" class="fa-solid fa-moon text-lg"></i>
+                </button>
+
+                <!-- User Info Profile Button & Dropdown -->
+                <div id="userHeaderProfile" class="hidden flex items-center gap-3 border-l border-slate-200 dark:border-slate-800 pl-3">
+                    <div class="text-right hidden sm:block">
+                        <div id="navUserName" class="text-sm font-semibold text-slate-800 dark:text-slate-200">Foydalanuvchi</div>
+                        <div id="navUserId" class="text-xs text-slate-400 font-mono">ID: -----</div>
+                    </div>
+                    <button onclick="logoutUser()" class="p-2.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-xl transition-all" title="Tizimdan chiqish">
+                        <i class="fa-solid fa-right-from-bracket text-lg"></i>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- CONTENT AREA -->
+        <main class="flex-1 flex flex-col md:flex-row max-w-7xl w-full mx-auto p-4 md:p-6 gap-6">
+
+            <!-- AUTHENTICATION VIEW (Sign In / Sign Up) -->
+            <section id="authSection" class="w-full max-w-md mx-auto my-auto py-10">
+                <div class="glassmorphism bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/60 rounded-3xl p-6 sm:p-8 shadow-2xl">
+                    
+                    <!-- Auth Switch Tabs -->
+                    <div class="flex bg-slate-200/60 dark:bg-slate-900/60 p-1 rounded-2xl mb-6">
+                        <button id="tabSignInBtn" onclick="switchAuthTab('signin')" class="flex-1 py-2.5 text-sm font-semibold rounded-xl transition-all bg-white dark:bg-slate-800 shadow-sm text-slate-900 dark:text-white">Kirish</button>
+                        <button id="tabSignUpBtn" onclick="switchAuthTab('signup')" class="flex-1 py-2.5 text-sm font-semibold text-slate-500 dark:text-slate-400 rounded-xl transition-all hover:text-slate-900 dark:hover:text-white">Ro'yxatdan o'tish</button>
+                    </div>
+
+                    <!-- Sign In Form -->
+                    <form id="signInForm" onsubmit="handleSignIn(event)" class="space-y-4">
+                        <h2 class="text-xl font-bold text-slate-900 dark:text-white mb-2">Xush kelibsiz!</h2>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">Foydalanuvchi nomi</label>
+                            <input type="text" id="signInUsername" required class="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500" placeholder="ismingiz">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">Parol</label>
+                            <input type="password" id="signInPassword" required class="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500" placeholder="••••••••">
+                        </div>
+                        <button type="submit" class="w-full bg-brand-600 hover:bg-brand-700 text-white font-semibold py-3 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-arrow-right-to-bracket"></i>
+                            Tizimga Kirish
+                        </button>
+                    </form>
+
+                    <!-- Sign Up Form -->
+                    <form id="signUpForm" onsubmit="handleSignUp(event)" class="space-y-4 hidden">
+                        <h2 class="text-xl font-bold text-slate-900 dark:text-white mb-2">Yangisini yaratish</h2>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">To'liq ism</label>
+                            <input type="text" id="signUpFullName" required class="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500" placeholder="Ali Valiyev">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">Foydalanuvchi nomi</label>
+                            <input type="text" id="signUpUsername" required class="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500" placeholder="alivaliyev">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">Parol</label>
+                            <input type="password" id="signUpPassword" required class="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500" placeholder="kamida 4 ta belgi">
+                        </div>
+                        <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-user-plus"></i>
+                            Ro'yxatdan o'tish
+                        </button>
+                    </form>
+
+                </div>
+            </section>
+
+            <!-- MAIN DASHBOARD VIEW (Visible after login) -->
+            <div id="dashboardSection" class="hidden w-full flex-1 flex flex-col md:flex-row gap-6">
+
+                <!-- SIDEBAR NAVIGATION -->
+                <aside class="w-full md:w-64 flex-shrink-0 space-y-4">
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-slate-200 dark:border-slate-700/60 shadow-sm space-y-2">
+                        <button id="navFilesBtn" onclick="switchMainTab('files')" class="w-full text-left px-4 py-3 rounded-xl font-medium text-sm flex items-center gap-3 transition-all bg-brand-50 dark:bg-brand-900/30 text-brand-600 dark:text-brand-400">
+                            <i class="fa-solid fa-folder-open text-base w-5 text-center"></i>
+                            Fayllarim
+                        </button>
+                        <button id="navCodesBtn" onclick="switchMainTab('codes')" class="w-full text-left px-4 py-3 rounded-xl font-medium text-sm flex items-center gap-3 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-all">
+                            <i class="fa-solid fa-code text-base w-5 text-center"></i>
+                            Open-Source Kodlar
+                        </button>
+                    </div>
+
+                    <!-- Profile Info Box -->
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-slate-200 dark:border-slate-700/60 shadow-sm text-xs space-y-2">
+                        <div class="font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider text-[10px]">Profil ma'lumoti</div>
+                        <div class="flex items-center gap-3 pt-1">
+                            <div class="w-10 h-10 rounded-full bg-brand-500 text-white font-bold flex items-center justify-center text-base" id="userAvatar">
+                                U
+                            </div>
+                            <div class="overflow-hidden">
+                                <p id="profileFullName" class="font-bold text-slate-900 dark:text-white truncate">Foydalanuvchi</p>
+                                <p id="profileUserId" class="text-slate-400 font-mono text-[11px]">ID: 000000</p>
+                            </div>
+                        </div>
+                    </div>
+                </aside>
+
+                <!-- TAB CONTENT AREA -->
+                <section class="flex-1 flex flex-col min-w-0">
+
+                    <!-- FILES MANAGEMENT TAB -->
+                    <div id="filesTab" class="space-y-6">
+
+                        <!-- Action Bar (Create Folder & Upload File) -->
+                        <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700/60 shadow-sm flex flex-wrap items-center justify-between gap-3">
+                            <!-- Breadcrumb Navigation -->
+                            <div class="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-300" id="folderBreadcrumb">
+                                <button onclick="openFolder(null)" class="hover:text-brand-500 flex items-center gap-1">
+                                    <i class="fa-solid fa-house"></i> Bosh sahifa
+                                </button>
+                                <span id="currentFolderPath"></span>
+                            </div>
+
+                            <!-- Buttons -->
+                            <div class="flex items-center gap-2 w-full sm:w-auto">
+                                <button onclick="openCreateFolderModal()" class="flex-1 sm:flex-none px-4 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-100 text-xs font-semibold rounded-xl transition-all flex items-center justify-center gap-2">
+                                    <i class="fa-solid fa-folder-plus text-amber-500"></i> Yangi papka
+                                </button>
+                                <label class="flex-1 sm:flex-none px-4 py-2.5 bg-brand-600 hover:bg-brand-700 text-white text-xs font-semibold rounded-xl cursor-pointer transition-all flex items-center justify-center gap-2 shadow-sm">
+                                    <i class="fa-solid fa-cloud-arrow-up"></i> Fayl yuklash
+                                    <input type="file" id="fileInput" onchange="handleFileUpload(event)" class="hidden">
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Folders Section -->
+                        <div>
+                            <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 px-1">Papkalar</h3>
+                            <div id="foldersGrid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                                <!-- Folder Cards dynamically inserted here -->
+                            </div>
+                        </div>
+
+                        <!-- Files Section -->
+                        <div>
+                            <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 px-1">Fayllar</h3>
+                            <div id="filesGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                <!-- File Cards dynamically inserted here -->
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- OPEN SOURCE CODES TAB -->
+                    <div id="codesTab" class="space-y-6 hidden">
+
+                        <!-- Top Header & Create Code Btn -->
+                        <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700/60 shadow-sm flex items-center justify-between">
+                            <div>
+                                <h2 class="text-lg font-bold text-slate-900 dark:text-white">Open-Source Kodlar</h2>
+                                <p class="text-xs text-slate-500 dark:text-slate-400">Dasturlash kodlaringizni xavfsiz saqlang va tezkor nusxalang</p>
+                            </div>
+                            <button onclick="openCodeModal()" class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-xl transition-all flex items-center gap-2 shadow-sm">
+                                <i class="fa-solid fa-plus"></i> Yangi kod qo'shish
+                            </button>
+                        </div>
+
+                        <!-- Codes List Grid -->
+                        <div id="codesGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <!-- Code Cards dynamically inserted here -->
+                        </div>
+
+                    </div>
+
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <!-- MODALS SECTION -->
+
+    <!-- CREATE FOLDER MODAL -->
+    <div id="folderModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-800 rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-700 space-y-4">
+            <h3 class="text-lg font-bold text-slate-900 dark:text-white">Yangi papka yaratish</h3>
+            <input type="text" id="folderNameInput" class="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-brand-500" placeholder="Papka nomi...">
+            <div class="flex justify-end gap-2 pt-2">
+                <button onclick="closeModal('folderModal')" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700">Bekor qilish</button>
+                <button onclick="saveFolder()" class="px-4 py-2 rounded-xl text-xs font-semibold bg-brand-600 hover:bg-brand-700 text-white shadow-sm">Yaratish</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- CREATE / EDIT CODE MODAL -->
+    <div id="codeModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-800 rounded-3xl max-w-2xl w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-700 space-y-4">
+            <div class="flex items-center justify-between">
+                <h3 id="codeModalTitle" class="text-lg font-bold text-slate-900 dark:text-white">Yangi kod qo'shish</h3>
+                <button onclick="closeModal('codeModal')" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <input type="hidden" id="editingCodeId" value="">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">Kod nomi</label>
+                    <input type="text" id="codeTitleInput" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-brand-500" placeholder="masalan: Quick Sort Algoritmi">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">Dasturlash tili</label>
+                    <select id="codeLangInput" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                        <option value="javascript">JavaScript</option>
+                        <option value="python">Python</option>
+                        <option value="html">HTML</option>
+                        <option value="css">CSS</option>
+                        <option value="cpp">C++</option>
+                        <option value="sql">SQL</option>
+                        <option value="other">Boshqa</option>
+                    </select>
+                </div>
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">Kod matni</label>
+                <textarea id="codeContentInput" rows="10" class="w-full p-4 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-950 text-slate-100 font-mono text-xs focus:outline-none focus:ring-2 focus:ring-brand-500" placeholder="// Kodingizni shu yerga yozing..."></textarea>
+            </div>
+            <div class="flex justify-end gap-2 pt-2">
+                <button onclick="closeModal('codeModal')" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700">Bekor qilish</button>
+                <button onclick="saveCodeSnippet()" class="px-5 py-2 rounded-xl text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm">Saqlash</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- CODE VIEW / PREVIEW MODAL -->
+    <div id="codeViewModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 rounded-3xl max-w-3xl w-full p-6 shadow-2xl border border-slate-700 space-y-4 text-white flex flex-col max-h-[85vh]">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <div class="flex items-center gap-3">
+                    <span id="viewCodeLang" class="px-2.5 py-1 bg-brand-500/20 text-brand-400 font-mono text-xs font-bold rounded-lg uppercase">js</span>
+                    <h3 id="viewCodeTitle" class="text-base font-bold text-white truncate">Kod nomi</h3>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button id="copyCodeBtn" onclick="copyCodeFromView()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs rounded-xl transition-all flex items-center gap-1.5">
+                        <i class="fa-regular fa-copy"></i> Nusxalash
+                    </button>
+                    <button onclick="closeModal('codeViewModal')" class="text-slate-400 hover:text-white p-1">
+                        <i class="fa-solid fa-xmark text-lg"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="flex-1 overflow-auto bg-slate-950 p-4 rounded-xl border border-slate-800 font-mono text-xs text-emerald-400">
+                <pre id="viewCodeContent" class="whitespace-pre-wrap break-all"></pre>
+            </div>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        /* ==========================================================================
+           1. INDEXED DB DATABASE SETUP & UTILITIES
+           ========================================================================== */
+        const DB_NAME = 'SaveAsFileDB';
+        const DB_VERSION = 1;
+        let db;
+
+        // Initialize IndexedDB
+        function initDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(DB_NAME, DB_VERSION);
+
+                request.onupgradeneeded = (e) => {
+                    db = e.target.result;
+                    // Users Store
+                    if (!db.objectStoreNames.contains('users')) {
+                        db.createObjectStore('users', { keyPath: 'id' });
+                    }
+                    // Folders Store
+                    if (!db.objectStoreNames.contains('folders')) {
+                        const folderStore = db.createObjectStore('folders', { keyPath: 'id' });
+                        folderStore.createIndex('userId', 'userId', { unique: false });
+                    }
+                    // Files Store
+                    if (!db.objectStoreNames.contains('files')) {
+                        const fileStore = db.createObjectStore('files', { keyPath: 'id' });
+                        fileStore.createIndex('userId', 'userId', { unique: false });
+                    }
+                    // Code Snippets Store
+                    if (!db.objectStoreNames.contains('codes')) {
+                        const codeStore = db.createObjectStore('codes', { keyPath: 'id' });
+                        codeStore.createIndex('userId', 'userId', { unique: false });
+                    }
+                };
+
+                request.onsuccess = (e) => {
+                    db = e.target.result;
+                    resolve(db);
+                };
+
+                request.onerror = (e) => {
+                    console.error('IndexedDB Xatosi:', e.target.error);
+                    reject(e.target.error);
+                };
+            });
+        }
+
+        // Generic IndexedDB Helper Functions
+        function dbAdd(storeName, item) {
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction(storeName, 'readwrite');
+                const store = tx.objectStore(storeName);
+                const req = store.add(item);
+                req.onsuccess = () => resolve(req.result);
+                req.onerror = () => reject(req.error);
+            });
+        }
+
+        function dbPut(storeName, item) {
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction(storeName, 'readwrite');
+                const store = tx.objectStore(storeName);
+                const req = store.put(item);
+                req.onsuccess = () => resolve(req.result);
+                req.onerror = () => reject(req.error);
+            });
+        }
+
+        function dbGetAllByIndex(storeName, indexName, value) {
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction(storeName, 'readonly');
+                const store = tx.objectStore(storeName);
+                const index = store.index(indexName);
+                const req = index.getAll(value);
+                req.onsuccess = () => resolve(req.result);
+                req.onerror = () => reject(req.error);
+            });
+        }
+
+        function dbDelete(storeName, id) {
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction(storeName, 'readwrite');
+                const store = tx.objectStore(storeName);
+                const req = store.delete(id);
+                req.onsuccess = () => resolve();
+                req.onerror = () => reject(req.error);
+            });
+        }
+
+        /* ==========================================================================
+           2. GLOBAL STATE & THEME MANAGEMENT
+           ========================================================================== */
+        let currentUser = null;
+        let currentFolderId = null; // null means root folder
+        let activeMainTab = 'files'; // 'files' or 'codes'
+
+        // Theme Toggle Handler
+        function toggleTheme() {
+            const html = document.documentElement;
+            const themeIcon = document.getElementById('themeIcon');
+            if (html.classList.contains('dark')) {
+                html.classList.remove('dark');
+                themeIcon.className = 'fa-solid fa-sun text-lg text-amber-500';
+                localStorage.setItem('theme', 'light');
+            } else {
+                html.classList.add('dark');
+                themeIcon.className = 'fa-solid fa-moon text-lg text-slate-300';
+                localStorage.setItem('theme', 'dark');
+            }
+        }
+
+        function loadSavedTheme() {
+            const savedTheme = localStorage.getItem('theme');
+            const themeIcon = document.getElementById('themeIcon');
+            if (savedTheme === 'light') {
+                document.documentElement.classList.remove('dark');
+                if (themeIcon) themeIcon.className = 'fa-solid fa-sun text-lg text-amber-500';
+            } else {
+                document.documentElement.classList.add('dark');
+                if (themeIcon) themeIcon.className = 'fa-solid fa-moon text-lg text-slate-300';
+            }
+        }
+
+        // Toast Notification Function
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            
+            const bgClass = type === 'success' ? 'bg-emerald-600' : type === 'error' ? 'bg-red-600' : 'bg-brand-600';
+            
+            toast.className = `${bgClass} text-white px-4 py-3 rounded-xl shadow-xl font-medium text-xs flex items-center gap-2 transition-all transform translate-y-2 opacity-0 pointer-events-auto`;
+            toast.innerHTML = `<i class="fa-solid fa-circle-info"></i> <span>${message}</span>`;
+            
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.classList.remove('translate-y-2', 'opacity-0');
+            }, 10);
+
+            setTimeout(() => {
+                toast.classList.add('opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        /* ==========================================================================
+           3. AUTHENTICATION MODULE
+           ========================================================================== */
+        function switchAuthTab(tab) {
+            const signInBtn = document.getElementById('tabSignInBtn');
+            const signUpBtn = document.getElementById('tabSignUpBtn');
+            const signInForm = document.getElementById('signInForm');
+            const signUpForm = document.getElementById('signUpForm');
+
+            if (tab === 'signin') {
+                signInBtn.className = "flex-1 py-2.5 text-sm font-semibold rounded-xl transition-all bg-white dark:bg-slate-800 shadow-sm text-slate-900 dark:text-white";
+                signUpBtn.className = "flex-1 py-2.5 text-sm font-semibold text-slate-500 dark:text-slate-400 rounded-xl transition-all hover:text-slate-900 dark:hover:text-white";
+                signInForm.classList.remove('hidden');
+                signUpForm.classList.add('hidden');
+            } else {
+                signUpBtn.className = "flex-1 py-2.5 text-sm font-semibold rounded-xl transition-all bg-white dark:bg-slate-800 shadow-sm text-slate-900 dark:text-white";
+                signInBtn.className = "flex-1 py-2.5 text-sm font-semibold text-slate-500 dark:text-slate-400 rounded-xl transition-all hover:text-slate-900 dark:hover:text-white";
+                signUpForm.classList.remove('hidden');
+                signInForm.classList.add('hidden');
+            }
+        }
+
+        async function handleSignUp(e) {
+            e.preventDefault();
+            const fullName = document.getElementById('signUpFullName').value.trim();
+            const username = document.getElementById('signUpUsername').value.trim().toLowerCase();
+            const password = document.getElementById('signUpPassword').value;
+
+            if (!fullName || !username || !password) {
+                showToast("Barcha maydonlarni to'ldiring!", 'error');
+                return;
+            }
+
+            try {
+                // Check if username already exists
+                const tx = db.transaction('users', 'readonly');
+                const store = tx.objectStore('users');
+                const req = store.getAll();
+                req.onsuccess = async () => {
+                    const allUsers = req.result || [];
+                    const exists = allUsers.some(u => u.username === username);
+
+                    if (exists) {
+                        showToast("Bu foydalanuvchi nomi band!", 'error');
+                        return;
+                    }
+
+                    // Create new User ID
+                    const userId = 'USR-' + Math.floor(100000 + Math.random() * 900000);
+                    const newUser = {
+                        id: userId,
+                        fullName,
+                        username,
+                        password, // Simple local auth (hashed/plain for local browser context)
+                        createdAt: new Date().toISOString()
+                    };
+
+                    await dbAdd('users', newUser);
+                    showToast("Ro'yxatdan muvaffaqiyatli o'tdingiz!", 'success');
+                    loginUserSession(newUser);
+                };
+            } catch (err) {
+                showToast("Xatolik yuz berdi!", 'error');
+            }
+        }
+
+        async function handleSignIn(e) {
+            e.preventDefault();
+            const username = document.getElementById('signInUsername').value.trim().toLowerCase();
+            const password = document.getElementById('signInPassword').value;
+
+            try {
+                const tx = db.transaction('users', 'readonly');
+                const store = tx.objectStore('users');
+                const req = store.getAll();
+                
+                req.onsuccess = () => {
+                    const allUsers = req.result || [];
+                    const foundUser = allUsers.find(u => u.username === username && u.password === password);
+
+                    if (foundUser) {
+                        showToast("Xush kelibsiz!", 'success');
+                        loginUserSession(foundUser);
+                    } else {
+                        showToast("Foydalanuvchi nomi yoki parol noto'g'ri!", 'error');
+                    }
+                };
+            } catch (err) {
+                showToast("Tizimga kirishda xatolik!", 'error');
+            }
+        }
+
+        function loginUserSession(user) {
+            currentUser = user;
+            localStorage.setItem('activeUserId', user.id);
+            
+            // Update UI
+            document.getElementById('authSection').classList.add('hidden');
+            document.getElementById('dashboardSection').classList.remove('hidden');
+            document.getElementById('userHeaderProfile').classList.remove('hidden');
+
+            document.getElementById('navUserName').textContent = user.fullName;
+            document.getElementById('navUserId').textContent = 'ID: ' + user.id;
+            document.getElementById('profileFullName').textContent = user.fullName;
+            document.getElementById('profileUserId').textContent = 'ID: ' + user.id;
+            document.getElementById('userAvatar').textContent = user.fullName.charAt(0).toUpperCase();
+
+            // Load User Dashboard Data
+            currentFolderId = null;
+            renderDashboard();
+        }
+
+        function logoutUser() {
+            currentUser = null;
+            localStorage.removeItem('activeUserId');
+            document.getElementById('dashboardSection').classList.add('hidden');
+            document.getElementById('userHeaderProfile').classList.add('hidden');
+            document.getElementById('authSection').classList.remove('hidden');
+            showToast("Tizimdan chiqdingiz.", 'info');
+        }
+
+        async function checkAutoLogin() {
+            const savedUserId = localStorage.getItem('activeUserId');
+            if (savedUserId && db) {
+                const tx = db.transaction('users', 'readonly');
+                const store = tx.objectStore('users');
+                const req = store.get(savedUserId);
+                req.onsuccess = () => {
+                    if (req.result) {
+                        loginUserSession(req.result);
+                    }
+                };
+            }
+        }
+
+        /* ==========================================================================
+           4. NAVIGATION & TAB SWITCHING
+           ========================================================================== */
+        function switchMainTab(tab) {
+            activeMainTab = tab;
+            const filesTab = document.getElementById('filesTab');
+            const codesTab = document.getElementById('codesTab');
+            const navFilesBtn = document.getElementById('navFilesBtn');
+            const navCodesBtn = document.getElementById('navCodesBtn');
+
+            if (tab === 'files') {
+                filesTab.classList.remove('hidden');
+                codesTab.classList.add('hidden');
+
+                navFilesBtn.className = "w-full text-left px-4 py-3 rounded-xl font-medium text-sm flex items-center gap-3 transition-all bg-brand-50 dark:bg-brand-900/30 text-brand-600 dark:text-brand-400";
+                navCodesBtn.className = "w-full text-left px-4 py-3 rounded-xl font-medium text-sm flex items-center gap-3 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-all";
+                renderFilesAndFolders();
+            } else {
+                codesTab.classList.remove('hidden');
+                filesTab.classList.add('hidden');
+
+                navCodesBtn.className = "w-full text-left px-4 py-3 rounded-xl font-medium text-sm flex items-center gap-3 transition-all bg-brand-50 dark:bg-brand-900/30 text-brand-600 dark:text-brand-400";
+                navFilesBtn.className = "w-full text-left px-4 py-3 rounded-xl font-medium text-sm flex items-center gap-3 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-all";
+                renderCodeSnippets();
+            }
+        }
+
+        function renderDashboard() {
+            if (activeMainTab === 'files') {
+                renderFilesAndFolders();
+            } else {
+                renderCodeSnippets();
+            }
+        }
+
+        /* ==========================================================================
+           5. FOLDER MANAGEMENT MODULE
+           ========================================================================== */
+        function openCreateFolderModal() {
+            document.getElementById('folderNameInput').value = '';
+            document.getElementById('folderModal').classList.remove('hidden');
+        }
+
+        async function saveFolder() {
+            const name = document.getElementById('folderNameInput').value.trim();
+            if (!name) {
+                showToast("Papka nomini kiriting!", 'error');
+                return;
+            }
+
+            const newFolder = {
+                id: 'FLD-' + Date.now(),
+                userId: currentUser.id,
+                parentId: currentFolderId,
+                name: name,
+                createdAt: new Date().toISOString()
+            };
+
+            await dbAdd('folders', newFolder);
+            closeModal('folderModal');
+            showToast("Papka yaratildi!", 'success');
+            renderFilesAndFolders();
+        }
+
+        async function openFolder(folderId) {
+            currentFolderId = folderId;
+            renderFilesAndFolders();
+        }
+
+        async function deleteFolder(folderId, e) {
+            e.stopPropagation();
+            if (!confirm("Ushbu papkani o'chirmoqchimisiz? Ichidagi fayllar ham o'chib ketadi.")) return;
+
+            try {
+                // Delete child files
+                const userFiles = await dbGetAllByIndex('files', 'userId', currentUser.id);
+                const folderFiles = userFiles.filter(f => f.folderId === folderId);
+                for (const file of folderFiles) {
+                    await dbDelete('files', file.id);
+                }
+
+                // Delete folder
+                await dbDelete('folders', folderId);
+                showToast("Papka o'chirildi", 'info');
+                renderFilesAndFolders();
+            } catch (err) {
+                showToast("O'chirishda xatolik!", 'error');
+            }
+        }
+
+        /* ==========================================================================
+           6. FILE UPLOAD & MANAGEMENT MODULE
+           ========================================================================== */
+        async function handleFileUpload(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            showToast("Fayl yuklanmoqda...", 'info');
+
+            const reader = new FileReader();
+            reader.onload = async function(event) {
+                const newFile = {
+                    id: 'FILE-' + Date.now(),
+                    userId: currentUser.id,
+                    folderId: currentFolderId,
+                    name: file.name,
+                    size: file.size,
+                    type: file.type,
+                    data: event.target.result, // Base64 / ArrayBuffer string
+                    createdAt: new Date().toISOString()
+                };
+
+                await dbAdd('files', newFile);
+                showToast("Fayl muvaffaqiyatli yuklandi!", 'success');
+                e.target.value = ''; // Reset input
+                renderFilesAndFolders();
+            };
+
+            reader.readAsDataURL(file);
+        }
+
+        async function downloadFile(fileId) {
+            try {
+                const tx = db.transaction('files', 'readonly');
+                const store = tx.objectStore('files');
+                const req = store.get(fileId);
+
+                req.onsuccess = () => {
+                    const file = req.result;
+                    if (!file) return;
+
+                    const a = document.createElement('a');
+                    a.href = file.data;
+                    a.download = file.name;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    showToast("Yuklab olish boshlandi", 'success');
+                };
+            } catch (err) {
+                showToast("Yuklab olishda xatolik!", 'error');
+            }
+        }
+
+        async function deleteFile(fileId) {
+            if (!confirm("Ushbu faylni o'chirishni tasdiqlaysizmi?")) return;
+            await dbDelete('files', fileId);
+            showToast("Fayl o'chirildi", 'info');
+            renderFilesAndFolders();
+        }
+
+        /* ==========================================================================
+           7. OPEN-SOURCE CODES MODULE
+           ========================================================================== */
+        function openCodeModal(codeToEdit = null) {
+            if (codeToEdit) {
+                document.getElementById('codeModalTitle').textContent = "Kodni tahrirlash";
+                document.getElementById('editingCodeId').value = codeToEdit.id;
+                document.getElementById('codeTitleInput').value = codeToEdit.title;
+                document.getElementById('codeLangInput').value = codeToEdit.lang;
+                document.getElementById('codeContentInput').value = codeToEdit.content;
+            } else {
+                document.getElementById('codeModalTitle').textContent = "Yangi kod qo'shish";
+                document.getElementById('editingCodeId').value = '';
+                document.getElementById('codeTitleInput').value = '';
+                document.getElementById('codeLangInput').value = 'javascript';
+                document.getElementById('codeContentInput').value = '';
+            }
+            document.getElementById('codeModal').classList.remove('hidden');
+        }
+
+        async function saveCodeSnippet() {
+            const editId = document.getElementById('editingCodeId').value;
+            const title = document.getElementById('codeTitleInput').value.trim();
+            const lang = document.getElementById('codeLangInput').value;
+            const content = document.getElementById('codeContentInput').value.trim();
+
+            if (!title || !content) {
+                showToast("Sarlavha va kod matnini kiriting!", 'error');
+                return;
+            }
+
+            const codeSnippet = {
+                id: editId ? editId : 'CODE-' + Date.now(),
+                userId: currentUser.id,
+                title: title,
+                lang: lang,
+                content: content,
+                createdAt: new Date().toISOString()
+            };
+
+            await dbPut('codes', codeSnippet);
+            closeModal('codeModal');
+            showToast(editId ? "Kod yangilandi!" : "Kod muvaffaqiyatli saqlandi!", 'success');
+            renderCodeSnippets();
+        }
+
+        async function viewCodeSnippet(codeId) {
+            const tx = db.transaction('codes', 'readonly');
+            const store = tx.objectStore('codes');
+            const req = store.get(codeId);
+
+            req.onsuccess = () => {
+                const code = req.result;
+                if (!code) return;
+
+                document.getElementById('viewCodeTitle').textContent = code.title;
+                document.getElementById('viewCodeLang').textContent = code.lang;
+                document.getElementById('viewCodeContent').textContent = code.content;
+
+                document.getElementById('codeViewModal').classList.remove('hidden');
+            };
+        }
+
+        function copyCodeFromView() {
+            const codeText = document.getElementById('viewCodeContent').textContent;
+            
+            // Clipboard Copy Command
+            const tempTextArea = document.createElement('textarea');
+            tempTextArea.value = codeText;
+            document.body.appendChild(tempTextArea);
+            tempTextArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempTextArea);
+
+            showToast("Kod nusxalandi!", 'success');
+        }
+
+        async function deleteCodeSnippet(codeId) {
+            if (!confirm("Ushbu kodni o'chirmoqchimisiz?")) return;
+            await dbDelete('codes', codeId);
+            showToast("Kod o'chirildi", 'info');
+            renderCodeSnippets();
+        }
+
+        /* ==========================================================================
+           8. RENDERERS & DISPLAY LOGIC
+           ========================================================================== */
+        async function renderFilesAndFolders() {
+            if (!currentUser) return;
+
+            // Fetch User Folders and Files
+            const allFolders = await dbGetAllByIndex('folders', 'userId', currentUser.id);
+            const allFiles = await dbGetAllByIndex('files', 'userId', currentUser.id);
+
+            // Filter by Current Folder Level
+            const currentFolders = allFolders.filter(f => f.parentId === currentFolderId);
+            const currentFiles = allFiles.filter(f => f.folderId === currentFolderId);
+
+            // Update Breadcrumb Path
+            const breadcrumbEl = document.getElementById('currentFolderPath');
+            if (currentFolderId) {
+                const currentFolder = allFolders.find(f => f.id === currentFolderId);
+                breadcrumbEl.innerHTML = `<span class="text-slate-400">/</span> <span class="text-brand-600 dark:text-brand-400 font-bold">${currentFolder ? currentFolder.name : 'Papka'}</span>`;
+            } else {
+                breadcrumbEl.innerHTML = '';
+            }
+
+            // Render Folders
+            const foldersGrid = document.getElementById('foldersGrid');
+            foldersGrid.innerHTML = '';
+            if (currentFolders.length === 0) {
+                foldersGrid.innerHTML = `<p class="text-xs text-slate-400 col-span-full italic">Papkalar mavjud emas</p>`;
+            } else {
+                currentFolders.forEach(folder => {
+                    const folderCard = document.createElement('div');
+                    folderCard.onclick = () => openFolder(folder.id);
+                    folderCard.className = "bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700/60 shadow-sm hover:shadow-md cursor-pointer transition-all flex items-center justify-between group";
+                    folderCard.innerHTML = `
+                        <div class="flex items-center gap-3 min-w-0">
+                            <i class="fa-solid fa-folder text-amber-500 text-2xl flex-shrink-0"></i>
+                            <span class="text-sm font-semibold text-slate-800 dark:text-slate-200 truncate">${folder.name}</span>
+                        </div>
+                        <button onclick="deleteFolder('${folder.id}', event)" class="text-slate-400 hover:text-red-500 p-1 opacity-0 group-hover:opacity-100 transition-opacity" title="O'chirish">
+                            <i class="fa-solid fa-trash-can text-xs"></i>
+                        </button>
+                    `;
+                    foldersGrid.appendChild(folderCard);
+                });
+            }
+
+            // Render Files
+            const filesGrid = document.getElementById('filesGrid');
+            filesGrid.innerHTML = '';
+            if (currentFiles.length === 0) {
+                filesGrid.innerHTML = `<p class="text-xs text-slate-400 col-span-full italic">Fayllar yuklanmagan</p>`;
+            } else {
+                currentFiles.forEach(file => {
+                    const fileCard = document.createElement('div');
+                    fileCard.className = "bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700/60 shadow-sm flex flex-col justify-between gap-3";
+                    
+                    const formattedSize = (file.size / 1024).toFixed(1) + ' KB';
+                    const iconClass = getFileIcon(file.type, file.name);
+
+                    fileCard.innerHTML = `
+                        <div class="flex items-start justify-between gap-2">
+                            <div class="flex items-center gap-3 min-w-0">
+                                <div class="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-700/50 text-brand-500 flex-shrink-0">
+                                    <i class="${iconClass} text-xl"></i>
+                                </div>
+                                <div class="min-w-0">
+                                    <h4 class="text-xs font-bold text-slate-800 dark:text-slate-200 truncate" title="${file.name}">${file.name}</h4>
+                                    <span class="text-[10px] text-slate-400">${formattedSize}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-700/50">
+                            <button onclick="downloadFile('${file.id}')" class="px-3 py-1.5 bg-brand-50 hover:bg-brand-100 dark:bg-brand-900/30 text-brand-600 dark:text-brand-400 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5">
+                                <i class="fa-solid fa-download"></i> Yuklab olish
+                            </button>
+                            <button onclick="deleteFile('${file.id}')" class="p-1.5 text-slate-400 hover:text-red-500 rounded-lg transition-all" title="O'chirish">
+                                <i class="fa-solid fa-trash-can text-xs"></i>
+                            </button>
+                        </div>
+                    `;
+                    filesGrid.appendChild(fileCard);
+                });
+            }
+        }
+
+        async function renderCodeSnippets() {
+            if (!currentUser) return;
+
+            const allCodes = await dbGetAllByIndex('codes', 'userId', currentUser.id);
+            const codesGrid = document.getElementById('codesGrid');
+            codesGrid.innerHTML = '';
+
+            if (allCodes.length === 0) {
+                codesGrid.innerHTML = `<p class="text-xs text-slate-400 col-span-full italic">Open-source kodlar mavjud emas. Yangi kod qo'shing!</p>`;
+                return;
+            }
+
+            allCodes.forEach(code => {
+                const codeCard = document.createElement('div');
+                codeCard.className = "bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700/60 shadow-sm space-y-3 flex flex-col justify-between";
+                
+                codeCard.innerHTML = `
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="px-2 py-0.5 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 font-mono text-[10px] font-bold rounded uppercase">${code.lang}</span>
+                            <span class="text-[10px] text-slate-400">${new Date(code.createdAt).toLocaleDateString()}</span>
+                        </div>
+                        <h4 class="text-sm font-bold text-slate-900 dark:text-white truncate mb-1">${code.title}</h4>
+                        <div class="bg-slate-950 p-2.5 rounded-xl font-mono text-[11px] text-emerald-400 max-h-24 overflow-hidden relative">
+                            <pre class="whitespace-pre-wrap">${escapeHtml(code.content.substring(0, 150))}${code.content.length > 150 ? '...' : ''}</pre>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-700/50">
+                        <button onclick="viewCodeSnippet('${code.id}')" class="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5">
+                            <i class="fa-solid fa-code"></i> Ko'rish & Ko'chirish
+                        </button>
+                        <button onclick='openCodeModal(${JSON.stringify(code)})' class="p-1.5 text-slate-400 hover:text-brand-500 transition-all" title="Tahrirlash">
+                            <i class="fa-solid fa-pen-to-square text-xs"></i>
+                        </button>
+                        <button onclick="deleteCodeSnippet('${code.id}')" class="p-1.5 text-slate-400 hover:text-red-500 transition-all" title="O'chirish">
+                            <i class="fa-solid fa-trash-can text-xs"></i>
+                        </button>
+                    </div>
+                `;
+                codesGrid.appendChild(codeCard);
+            });
+        }
+
+        /* ==========================================================================
+           9. HELPER FUNCTIONS
+           ========================================================================== */
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.add('hidden');
+        }
+
+        function getFileIcon(mimeType, filename) {
+            const ext = filename.split('.').pop().toLowerCase();
+            if (mimeType.includes('image') || ['jpg', 'jpeg', 'png', 'gif', 'svg'].includes(ext)) {
+                return 'fa-solid fa-file-image text-emerald-500';
+            } else if (mimeType.includes('pdf') || ext === 'pdf') {
+                return 'fa-solid fa-file-pdf text-red-500';
+            } else if (['zip', 'rar', '7z', 'tar'].includes(ext)) {
+                return 'fa-solid fa-file-zipper text-amber-500';
+            } else if (['js', 'html', 'css', 'py', 'json', 'cpp'].includes(ext)) {
+                return 'fa-solid fa-file-code text-brand-500';
+            }
+            return 'fa-solid fa-file text-slate-400';
+        }
+
+        function escapeHtml(text) {
+            return text
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        /* ==========================================================================
+           10. INITIALIZATION
+           ========================================================================== */
+        window.onload = async function() {
+            loadSavedTheme();
+            await initDB();
+            await checkAutoLogin();
+        };
+    </script>
+</body>
+</html>
